@@ -46,6 +46,8 @@ PACKAGES=(
     sqlmap nikto whatweb wafw00f dirb dirsearch wfuzz
     hydra wpscan nuclei subfinder amass httpx-toolkit
     commix xsser mitmproxy wireshark
+    # VPN
+    wireguard wireguard-tools resolvconf
 )
 # Si un nombre no existe apt aborta todo, así que se reintenta uno por uno
 if ! apt-get "${APT_OPTS[@]}" install "${PACKAGES[@]}"; then
