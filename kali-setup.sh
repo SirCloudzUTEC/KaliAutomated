@@ -41,6 +41,11 @@ PACKAGES=(
     seclists gobuster ffuf feroxbuster
     binwalk exiftool steghide hashcat john
     python3-pwntools ghidra
+    # Pentesting web / red
+    burpsuite zaproxy nmap masscan rustscan netcat-traditional socat
+    sqlmap nikto whatweb wafw00f dirb dirsearch wfuzz
+    hydra wpscan nuclei subfinder amass httpx-toolkit
+    commix xsser mitmproxy wireshark
 )
 # Si un nombre no existe apt aborta todo, así que se reintenta uno por uno
 if ! apt-get "${APT_OPTS[@]}" install "${PACKAGES[@]}"; then
