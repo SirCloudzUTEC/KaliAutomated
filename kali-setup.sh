@@ -48,6 +48,14 @@ PACKAGES=(
     commix xsser mitmproxy wireshark
     # VPN
     wireguard wireguard-tools resolvconf
+    # Pwn / Reversing
+    radare2 checksec python3-ropgadget ropper ltrace strace patchelf
+    ruby ruby-dev
+    # Crypto (libs por apt porque Kali bloquea pip global, PEP 668)
+    python3-pycryptodome python3-gmpy2 python3-z3 python3-sympy python3-requests
+    python3-libnum
+    # Forense / Stego
+    foremost pngcheck sleuthkit stegseek volatility3 testdisk
 )
 # Si un nombre no existe apt aborta todo, así que se reintenta uno por uno
 if ! apt-get "${APT_OPTS[@]}" install "${PACKAGES[@]}"; then
@@ -74,6 +82,59 @@ if ! command -v code >/dev/null 2>&1; then
     ok "VS Code instalado"
 else
     ok "VS Code ya estaba instalado"
+fi
+
+# ---------------------------------------------------------------------------
+info "Instalando gems de Ruby (one_gadget, zsteg)"
+gem install one_gadget zsteg && ok "Gems instaladas" || warn "Falló la instalación de gems"
+
+# ---------------------------------------------------------------------------
+info "Instalando pwndbg para $REAL_USER"
+if [[ ! -d "$REAL_HOME/pwndbg" ]]; then
+    sudo -u "$REAL_USER" git clone --depth 1 https://github.com/pwndbg/pwndbg "$REAL_HOME/pwndbg" \
+        && (cd "$REAL_HOME/pwndbg" && sudo -u "$REAL_USER" ./setup.sh) \
+        && ok "pwndbg instalado" || warn "Falló la instalación de pwndbg"
+else
+    ok "pwndbg ya estaba clonado en $REAL_HOME/pwndbg"
+fi
+
+# ---------------------------------------------------------------------------
+info "Instalando RsaCtfTool en /opt/RsaCtfTool"
+if [[ ! -d /opt/RsaCtfTool ]]; then
+    git clone --depth 1 https://github.com/RsaCtfTool/RsaCtfTool /opt/RsaCtfTool \
+        && python3 -m venv /opt/RsaCtfTool/venv \
+        && /opt/RsaCtfTool/venv/bin/pip install /opt/RsaCtfTool \
+        && ln -sf /opt/RsaCtfTool/venv/bin/RsaCtfTool /usr/local/bin/RsaCtfTool \
+        && ok "RsaCtfTool instalado (comando: RsaCtfTool)" || warn "Falló la instalación de RsaCtfTool"
+else
+    ok "RsaCtfTool ya estaba instalado"
+fi
+
+# ---------------------------------------------------------------------------
+info "Descargando CyberChef offline en /opt/cyberchef"
+if [[ ! -d /opt/cyberchef ]]; then
+    CC_URL="$(curl -fsSL https://api.github.com/repos/gchq/CyberChef/releases/latest \
+        | jq -r '.assets[] | select(.name | endswith(".zip")) | .browser_download_url' | head -n1)"
+    if [[ -n "$CC_URL" ]]; then
+        mkdir -p /opt/cyberchef \
+            && curl -fsSL "$CC_URL" -o /tmp/cyberchef.zip \
+            && unzip -q /tmp/cyberchef.zip -d /opt/cyberchef \
+            && ln -sf "$(ls /opt/cyberchef/CyberChef_*.html | head -n1)" /opt/cyberchef/cyberchef.html \
+            && rm -f /tmp/cyberchef.zip \
+            && ok "CyberChef listo: abre /opt/cyberchef/cyberchef.html" || warn "Falló la descarga de CyberChef"
+    else
+        warn "No se encontró el release de CyberChef"
+    fi
+else
+    ok "CyberChef ya estaba en /opt/cyberchef"
+fi
+
+# ---------------------------------------------------------------------------
+info "Descomprimiendo rockyou.txt"
+if [[ -f /usr/share/wordlists/rockyou.txt.gz && ! -f /usr/share/wordlists/rockyou.txt ]]; then
+    gunzip -k /usr/share/wordlists/rockyou.txt.gz && ok "rockyou.txt listo"
+else
+    ok "rockyou.txt ya estaba descomprimido (o no existe el .gz)"
 fi
 
 # ---------------------------------------------------------------------------
